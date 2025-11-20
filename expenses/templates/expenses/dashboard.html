@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 class="text-2xl font-bold">Dashboard</h1>
+        <a href="{% url 'expense_add' %}" class="btn btn-primary w-full sm:w-auto">
+            <i class="fa-solid fa-plus"></i> Add Expense
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Total Income -->
+        <div class="stats shadow bg-base-100">
+            <div class="stat">
+                <div class="stat-figure text-success">
+                    <i class="fa-solid fa-arrow-trend-up text-3xl"></i>
+                </div>
+                <div class="stat-title">Total Income</div>
+                <div class="stat-value text-success">₹{{ total_income|default:"0" }}</div>
+                <div class="stat-desc">All time credits</div>
+            </div>
+        </div>
+
+        <!-- Total Expenses -->
+        <div class="stats shadow bg-base-100">
+            <div class="stat">
+                <div class="stat-figure text-error">
+                    <i class="fa-solid fa-arrow-trend-down text-3xl"></i>
+                </div>
+                <div class="stat-title">Total Expenses</div>
+                <div class="stat-value text-error">₹{{ total_expenses|default:"0" }}</div>
+                <div class="stat-desc">All time spending</div>
+            </div>
+        </div>
+
+        <!-- Balance -->
+        <div class="stats shadow bg-base-100">
+            <div class="stat">
+                <div class="stat-figure text-primary">
+                    <i class="fa-solid fa-wallet text-3xl"></i>
+                </div>
+                <div class="stat-title">Balance</div>
+                <div class="stat-value {% if balance >= 0 %}text-primary{% else %}text-error{% endif %}">₹{{ balance|default:"0" }}</div>
+                <div class="stat-desc">Current available</div>
+            </div>
+        </div>
+
+        <!-- This Month -->
+        <div class="stats shadow bg-base-100">
+            <div class="stat">
+                <div class="stat-figure text-secondary">
+                    <i class="fa-solid fa-calendar-days text-3xl"></i>
+                </div>
+                <div class="stat-title">This Month</div>
+                <div class="stat-value text-secondary">₹{{ monthly_expenses|default:"0" }}</div>
+                <div class="stat-desc">Spending in {% now "F" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Spending Trend Chart (Takes 2 columns) -->
+        <div class="card bg-base-100 shadow-xl lg:col-span-2">
+            <div class="card-body">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h2 class="card-title">Spending Trend</h2>
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        <!-- Transaction Type Toggle -->
+                        <div class="join">
+                            <input class="join-item btn btn-sm btn-outline" type="radio" name="transactionType" aria-label="Spend" value="EXPENSE" checked />
+                            <input class="join-item btn btn-sm btn-outline" type="radio" name="transactionType" aria-label="Credit" value="INCOME" />
+                        </div>
+                        
+                        <select id="timeRange" class="select select-bordered select-sm">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="365">Last Year</option>
+                        </select>
+                        <select id="chartType" class="select select-bordered select-sm">
+                            <option value="bar">Bar</option>
+                            <option value="line">Line</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="w-full h-80">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Expenses (Takes 1 column) -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title">Recent Activity</h2>
+                    <a href="{% url 'expense_list' %}" class="btn btn-xs btn-ghost">View All</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr>
+                                <td>
+                                    <div class="font-bold truncate max-w-[120px]">{{ expense.title }}</div>
+                                    <div class="text-xs opacity-50">{{ expense.date }}</div>
+                                </td>
+                                <td class="text-right {% if expense.transaction_type == 'INCOME' %}text-success{% else %}text-error{% endif %} font-medium whitespace-nowrap">
+                                    {% if expense.transaction_type == 'INCOME' %}+{% else %}-{% endif %}₹{{ expense.amount }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center py-4 text-gray-500">No recent activity</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let chartInstance = null;
+
+    async function fetchChartData(days, type) {
+        const url = `{% url 'chart_data' %}?days=${days}&type=${type}`;
+        console.log('Fetching chart data:', url);
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log('Chart data received:', data);
+        console.log('Labels:', data.labels);
+        console.log('Data values:', data.data);
+        console.log('Max value:', Math.max(...data.data));
+        return data;
+    }
+
+    async function updateChart() {
+        const days = document.getElementById('timeRange').value;
+        const chartType = document.getElementById('chartType').value;
+        // Get value from checked radio button
+        const transactionType = document.querySelector('input[name="transactionType"]:checked').value;
+        
+        console.log('Updating chart with:', { days, chartType, transactionType });
+        
+        const data = await fetchChartData(days, transactionType);
+        
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        const color = transactionType === 'INCOME' ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)';
+        const borderColor = transactionType === 'INCOME' ? 'rgba(16, 185, 129, 1)' : 'rgba(239, 68, 68, 1)';
+        const label = transactionType === 'INCOME' ? 'Income' : 'Spending';
+
+        chartInstance = new Chart(ctx, {
+            type: chartType,
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: label,
+                    data: data.data,
+                    backgroundColor: color,
+                    borderColor: borderColor,
+                    borderWidth: 2,
+                    borderRadius: 5,
+                    fill: chartType === 'line'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    document.getElementById('timeRange').addEventListener('change', updateChart);
+    document.getElementById('chartType').addEventListener('change', updateChart);
+    
+    // Add event listeners to all radio buttons
+    document.querySelectorAll('input[name="transactionType"]').forEach(radio => {
+        radio.addEventListener('change', updateChart);
+    });
+
+    // Initial load
+    updateChart();
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Category{% else %}Add Category{% endif %} - BudGenie{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl font-bold mb-6">
+                {% if form.instance.pk %}Edit Category{% else %}Add Category{% endif %}
+            </h2>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">Name</span>
+                    </label>
+                    <input type="text" name="name" value="{{ form.name.value|default:'' }}" class="input input-bordered w-full" required>
+                    {% if form.name.errors %}
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ form.name.errors.0 }}</span>
+                    </label>
+                    {% endif %}
+                </div>
+
+                <div class="form-control w-full mb-6">
+                    <label class="label">
+                        <span class="label-text">Color</span>
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="color" name="color" value="{{ form.color.value|default:'#4f46e5' }}" class="input input-bordered w-20 h-12 p-1 cursor-pointer">
+                        <span class="text-sm text-gray-500">Pick a color for this category</span>
+                    </div>
+                    {% if form.color.errors %}
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ form.color.errors.0 }}</span>
+                    </label>
+                    {% endif %}
+                </div>
+
+                <div class="card-actions justify-end gap-4">
+                    <a href="{% url 'category_list' %}" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

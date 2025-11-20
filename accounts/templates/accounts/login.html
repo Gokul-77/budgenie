@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - BudGenie{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[80vh]">
+    <div class="card w-96 bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title justify-center text-2xl font-bold mb-4">Welcome Back! 👋</h2>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text">Username or Email</span>
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ form.username.errors.0 }}</span>
+                    </label>
+                    {% endif %}
+                </div>
+
+                <div class="form-control w-full mt-4">
+                    <label class="label">
+                        <span class="label-text">Password</span>
+                    </label>
+                    <div class="relative">
+                        {{ form.password }}
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-primary cursor-pointer" onclick="togglePassword('id_password')">
+                            <i class="fa-solid fa-eye" id="eye-icon-id_password"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ form.password.errors.0 }}</span>
+                    </label>
+                    {% endif %}
+                </div>
+                
+                <div class="card-actions justify-center mt-6">
+                    <button type="submit" class="btn btn-primary w-full">Login</button>
+                </div>
+            </form>
+            <div class="divider">OR</div>
+            <div class="text-center">
+                <p>Don't have an account? <a href="{% url 'signup' %}" class="link link-primary">Sign up</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add DaisyUI classes to form inputs
+    document.querySelectorAll('input').forEach(input => {
+        input.classList.add('input', 'input-bordered', 'w-full');
+        // Remove max-w-xs to let it fill width
+        input.classList.remove('max-w-xs');
+    });
+
+    function togglePassword(fieldId) {
+        const passwordInput = document.getElementById(fieldId);
+        const eyeIcon = document.getElementById('eye-icon-' + fieldId);
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        }
+    }
+</script>
+{% endblock %}

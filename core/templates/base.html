@@ -1,0 +1,226 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BudGenie{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'favicon.png' %}">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#10b981',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Force drawer to display correctly */
+        .drawer-side {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: auto;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .drawer-toggle:checked ~ .drawer-content .drawer-side,
+        .drawer-toggle:checked ~ .drawer-side {
+            transform: translateX(0);
+        }
+        
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        
+        .drawer-toggle:checked ~ .drawer-content .drawer-overlay,
+        .drawer-toggle:checked ~ .drawer-side .drawer-overlay {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-base-200 font-sans">
+    {% block layout %}
+    <div class="drawer">
+        <input id="my-drawer-3" type="checkbox" class="drawer-toggle" /> 
+        <div class="drawer-content flex flex-col">
+            <!-- Navbar -->
+            <div class="w-full navbar bg-base-100 shadow-sm sticky top-0 z-30">
+                <div class="flex-none lg:hidden">
+                    <label for="my-drawer-3" aria-label="open sidebar" class="btn btn-square btn-ghost">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </label>
+                </div>
+                <div class="flex-1 px-2 mx-2 text-xl font-bold text-primary">
+                    <a href="/" class="flex items-center gap-2">
+                        <i class="fa-solid fa-genie"></i> BudGenie
+                    </a>
+                </div>
+                <div class="flex-none hidden lg:block">
+                    <ul class="menu menu-horizontal px-1">
+                        <!-- Navbar menu content here -->
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+                        <li><a href="{% url 'expense_list' %}" class="{% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}"><i class="fa-solid fa-money-bill-wave"></i> Expenses</a></li>
+                        <li><a href="{% url 'category_list' %}" class="{% if request.resolver_match.url_name == 'category_list' %}active{% endif %}"><i class="fa-solid fa-tags"></i> Categories</a></li>
+                        <li>
+                            <details>
+                                <summary><i class="fa-solid fa-user"></i> {{ user.username }}</summary>
+                                <ul class="p-2 bg-base-100 rounded-t-none z-[1] shadow-lg w-40 right-0">
+                                    <li>
+                                        <div class="flex items-center justify-between">
+                                            <span>Theme</span>
+                                            <input type="checkbox" class="toggle toggle-sm theme-controller" value="dim" />
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <form action="{% url 'logout' %}" method="post" class="w-full">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w-full text-left text-error"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </details>
+                        </li>
+                        {% else %}
+                        <li><a href="{% url 'login' %}"><i class="fa-solid fa-key"></i> Login</a></li>
+                        <li><a href="{% url 'signup' %}"><i class="fa-solid fa-user-plus"></i> Signup</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Page Content -->
+            <main class="flex-1 p-6 container mx-auto">
+                {% if messages %}
+                <div class="toast toast-top toast-end z-50">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }}">
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div> 
+        
+        <!-- Sidebar (Mobile) -->
+        <div class="drawer-side z-50">
+            <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"></label> 
+            <ul class="menu p-4 w-80 min-h-full bg-base-100 text-base-content shadow-xl">
+                <!-- Sidebar content here -->
+                <li class="mb-8">
+                    <div class="text-2xl font-bold text-primary px-4">
+                        <i class="fa-solid fa-genie"></i> BudGenie
+                    </div>
+                </li>
+                
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+                <li><a href="{% url 'expense_list' %}" class="{% if request.resolver_match.url_name == 'expense_list' %}active{% endif %}"><i class="fa-solid fa-money-bill-wave"></i> Expenses</a></li>
+                <li><a href="{% url 'category_list' %}" class="{% if request.resolver_match.url_name == 'category_list' %}active{% endif %}"><i class="fa-solid fa-tags"></i> Categories</a></li>
+                
+                <div class="divider"></div>
+                
+                <!-- User Info -->
+                <li class="menu-title">
+                    <span><i class="fa-solid fa-user"></i> {{ user.username }}</span>
+                </li>
+                
+                <li>
+                    <div class="flex items-center justify-between">
+                        <span><i class="fa-solid fa-palette"></i> Theme</span>
+                        <input type="checkbox" class="toggle toggle-sm theme-controller" value="dim" />
+                    </div>
+                </li>
+                
+                <li class="mt-auto">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left text-error"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                    </form>
+                </li>
+                {% else %}
+                <li><a href="{% url 'login' %}"><i class="fa-solid fa-key"></i> Login</a></li>
+                <li><a href="{% url 'signup' %}"><i class="fa-solid fa-user-plus"></i> Signup</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    {% endblock %}
+    
+    <script>
+        // Ensure drawer toggle works on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const drawerToggle = document.getElementById('my-drawer-3');
+            const hamburgerBtn = document.querySelector('label[for="my-drawer-3"]');
+            const drawerOverlay = document.querySelector('.drawer-overlay');
+            
+            // Debug logging
+            console.log('Drawer checkbox:', drawerToggle);
+            console.log('Hamburger button:', hamburgerBtn);
+            console.log('Drawer overlay:', drawerOverlay);
+            
+            if (drawerToggle) {
+                drawerToggle.addEventListener('change', function() {
+                    console.log('Drawer state:', this.checked ? 'OPEN' : 'CLOSED');
+                    // Force visibility update
+                    const drawerSide = document.querySelector('.drawer-side');
+                    if (drawerSide) {
+                        drawerSide.style.visibility = this.checked ? 'visible' : 'hidden';
+                    }
+                });
+            }
+            
+            // Fallback: Manual toggle if DaisyUI mechanism fails
+            if (hamburgerBtn && drawerToggle) {
+                hamburgerBtn.addEventListener('click', function(e) {
+                    console.log('Hamburger clicked, current state:', drawerToggle.checked);
+                    // This should be handled by the label's 'for' attribute, but adding as fallback
+                    setTimeout(() => {
+                        console.log('After click, state:', drawerToggle.checked);
+                    }, 100);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
