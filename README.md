@@ -67,10 +67,12 @@ BudGenie is a modern, full-featured expense tracking application built with Djan
 ## 📸 Screenshots
 
 <img width="1897" height="888" alt="image" src="https://github.com/user-attachments/assets/9c0f0cb5-137f-44da-b67a-66f4611586b1" />
+<br>
+<img width="1895" height="882" alt="image" src="https://github.com/user-attachments/assets/bfda63dc-7ddf-49dd-a51f-f8f786be0a98" />
+<br>
+<img width="1896" height="859" alt="image" src="https://github.com/user-attachments/assets/ad71512b-2ccb-4764-8d4e-c6ed4062d58b" />
 
-<img width="1903" height="887" alt="image" src="https://github.com/user-attachments/assets/78bb6d23-af8b-491b-a497-b76a215ad187" />
-
-<img width="1906" height="856" alt="image" src="https://github.com/user-attachments/assets/955ef35f-f5df-4e9b-92d7-83bfb656b2e2" />
+<br>
 
 
 ---
